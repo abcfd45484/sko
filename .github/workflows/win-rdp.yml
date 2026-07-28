@@ -1,0 +1,27 @@
+name: Win2025 Tailscale RDP【常驻修复版】
+on:
+  workflow_dispatch
+jobs:
+  rdp-host:
+    runs-on: windows-2025
+    timeout-minutes: 350
+    steps:
+      - name: 开启RDP远程桌面（移除中文防火墙命令）
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Restart-Service TermService -Force
+          $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
+          Set-LocalUser -Name runneradmin -Password $securePwd
+
+      - name: winget 静默安装 Tailscale
+        run: winget install Tailscale.Tailscale --silent --accept-package-agreements --accept-source-agreements
+
+      - name: 启动Tailscale + 无限循环常驻防止虚拟机销毁
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+        run: |
+          Start-Service Tailscale
+          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=$env:TS_AUTHKEY --accept-routes
+          while($true){
+            Start-Sleep -Seconds 600
+          }
