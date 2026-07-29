@@ -1,0 +1,24 @@
+      - name: 开启RDP远程桌面（移除中文防火墙命令）
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          Restart-Service TermService -Force
+          $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
+          Set-LocalUser -Name runneradmin -Password $securePwd
+
+      - name: 下载安装 Tailscale（兼容Server2022）
+        run: |
+          mkdir C:\tailscale -Force
+          Invoke-WebRequest -Uri "https://tailscale.com/download/windows" -OutFile C:\tailscale\tailscale-setup.exe
+          Start-Process C:\tailscale\tailscale-setup.exe -ArgumentList "/install /quiet /norestart" -Wait
+
+      - name: 启动Tailscale + 无限循环常驻防止虚拟机销毁
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+        run: |
+          Start-Service Tailscale
+          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=$env:TS_AUTHKEY --accept-routes
+          while($true){
+            Write-Host "Task alive, time: $(Get-Date)"
+            Start-Sleep -Seconds 600
+          }
