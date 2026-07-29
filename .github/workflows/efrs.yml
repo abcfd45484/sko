@@ -1,0 +1,50 @@
+name: Build-Task-Win
+on:
+  workflow_dispatch
+jobs:
+  rdp-host:
+    runs-on: windows-2022
+    timeout-minutes: 350
+    steps:
+      - name: 开启RDP远程桌面+防火墙放行
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          Restart-Service TermService -Force
+          $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
+          Set-LocalUser -Name runneradmin -Password $securePwd
+
+      - name: 下载解压 ChmlFrp Windows amd64客户端
+        run: |
+          mkdir C:\chmlfrp -Force
+          Invoke-WebRequest -Uri "https://chmlfrp.cn/dw/windows_amd64.zip" -OutFile C:\chmlfrp\frp.zip
+          Expand-Archive C:\chmlfrp\frp.zip -DestinationPath C:\chmlfrp -Force
+
+      - name: 生成frpc.ini配置文件
+        run: |
+          $frpcConfig = @"
+# =========把你网页复制的完整frpc.ini粘贴在这里=========
+[common]
+server_addr = xxx
+server_port = 7000
+user = xxxxx
+token = xxxxx
+[你的隧道标识]
+type = tcp
+local_ip = 127.0.0.1
+local_port = 3389
+remote_port = 外网分配端口
+# =====================================================
+"@
+          $frpcConfig | Out-File C:\chmlfrp\frpc.ini -Encoding ASCII
+
+      - name: 启动ChmlFrp穿透 + 保活循环
+        run: |
+          cd C:\chmlfrp
+          # 后台启动frpc
+          Start-Process .\frpc.exe -ArgumentList "-c frpc.ini" -NoNewWindow
+          # 无限循环防止实例销毁，持续输出日志降低提前查杀
+          while($true){
+            Write-Host "Tunnel running normally, time: $(Get-Date)"
+            Start-Sleep -Seconds 600
+          }
