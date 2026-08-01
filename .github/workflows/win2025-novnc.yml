@@ -6,18 +6,21 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 340
     steps:
-      # 1. 设置系统账号
+      # 1. 设置远程账号（修复：检测账号是否已在管理员组，防止重复添加报错终止任务）
       - name: 创建远程账号
         run: |
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
           Set-LocalUser -Name runneradmin -Password $securePwd
-          Add-LocalGroupMember -Group Administrators -Member runneradmin
+          $member = Get-LocalGroupMember -Group Administrators -Member runneradmin -ErrorAction SilentlyContinue
+          if(-not $member){
+              Add-LocalGroupMember -Group Administrators -Member runneradmin
+          }
 
-      # 2. 防火墙放行VNC与noVNC端口
+      # 2. 防火墙放行端口
       - name: 放行防火墙端口
         run: |
-          New-NetFirewallRule -DisplayName "VNC-5900" -Direction Inbound -LocalPort 5900 -Protocol TCP -Action Allow
-          New-NetFirewallRule -DisplayName "noVNC-9000" -Direction Inbound -LocalPort 9000 -Protocol TCP -Action Allow
+          New-NetFirewallRule -DisplayName "VNC-5900" -Direction Inbound -LocalPort 5900 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
+          New-NetFirewallRule -DisplayName "noVNC-9000" -Direction Inbound -LocalPort 9000 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
 
       # 3. 静默安装Tailscale
       - name: 安装Tailscale
@@ -25,38 +28,37 @@ jobs:
           winget install Tailscale.Tailscale --silent --accept-source-agreements
           Start-Process "C:\Program Files\Tailscale\tailscale.exe" -ArgumentList "up --authkey ${{ secrets.TAILSCALE_AUTHKEY }}" -Wait
 
-      # 4. 安装TigerVNC Server（Windows VNC服务端）
+      # 4. 安装TigerVNC Server
       - name: 安装TigerVNC
         run: |
           Invoke-WebRequest -Uri "https://sourceforge.net/projects/tigervnc/files/stable/1.14.0/tigervnc64-winvnc-1.14.0.exe/download" -OutFile vncsetup.exe
           .\vncsetup.exe /S /v/qn
-          # 设置VNC访问密码（自行修改）
           & 'C:\Program Files\TigerVNC\winvnc4.exe' -register
           Set-ItemProperty -Path "HKCU:\Software\TigerVNC\WinVNC4" -Name Password -Value ("password123" | ConvertTo-SecureString -AsPlainText -Force)
           Start-Service WinVNC4
 
-      # 5. 安装Node.js（运行websockify代理）
+      # 5. 安装Node.js
       - name: 安装NodeJS
         run: winget install OpenJS.NodeJS.LTS --silent
 
-      # 6. 下载noVNC资源包
+      # 6. 拉取noVNC源码
       - name: 拉取noVNC
         run: |
           git clone https://github.com/novnc/noVNC.git C:\noVNC
           cd C:\noVNC
           git clone https://github.com/novnc/websockify.git websockify
 
-      # 7. 启动noVNC Websockify代理
+      # 7. 后台启动noVNC代理
       - name: 启动noVNC服务
         run: |
           cd C:\noVNC
           Start-Process node -ArgumentList "websockify/websockify.js --web . 9000 localhost:5900"
 
-      # ==========【可选】开启Funnel公网暴露（方案B，外网直接访问）==========
+      # ==========可选：开启公网Funnel外网访问，需要先在Tailscale后台开启策略权限==========
       # - name: 开放公网Funnel
       #   run: tailscale funnel 9000
 
-      # 8. 无限循环保持虚拟机不销毁（核心）
+      # 8. 无限循环保持虚拟机不回收
       - name: 保持运行
         run: |
           while($true){
