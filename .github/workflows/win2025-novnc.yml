@@ -6,7 +6,7 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 340
     steps:
-      # 1. 设置远程账号（修复重复添加管理员报错）
+      # 1. 创建远程账号，规避重复加入管理员报错
       - name: 创建远程账号
         run: |
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
@@ -28,36 +28,36 @@ jobs:
           winget install Tailscale.Tailscale --silent --accept-source-agreements
           Start-Process "C:\Program Files\Tailscale\tailscale.exe" -ArgumentList "up --authkey ${{ secrets.TAILSCALE_AUTHKEY }}" -Wait
 
-      # 4. 使用winget直接安装TigerVNC，彻底抛弃手动下载exe
+      # 4. TigerVNC安装 + 正确调用程序 + 正确注册表路径
       - name: 安装TigerVNC
         run: |
           winget install TigerVNC.TigerVNC --silent --accept-source-agreements
-          & 'C:\Program Files\TigerVNC\winvnc4.exe' -register
-          Set-ItemProperty -Path "HKCU:\Software\TigerVNC\WinVNC4" -Name Password -Value ("password123" | ConvertTo-SecureString -AsPlainText -Force)
-          Start-Service WinVNC4
+          Start-Process -FilePath "C:\Program Files\TigerVNC\winvnc4.exe" -ArgumentList "-register" -Wait
+          Set-ItemProperty -Path "HKLM:\Software\TigerVNC\WinVNC4" -Name Password -Value ("password123" | ConvertTo-SecureString -AsPlainText -Force)
+          Start-Service WinVNC4 -ErrorAction SilentlyContinue
 
-      # 5. 安装Node.js
+      # 5. 安装Node.js LTS
       - name: 安装NodeJS
         run: winget install OpenJS.NodeJS.LTS --silent
 
-      # 6. 拉取noVNC源码
+      # 6. 拉取noVNC与websockify
       - name: 拉取noVNC
         run: |
           git clone https://github.com/novnc/noVNC.git C:\noVNC
           cd C:\noVNC
           git clone https://github.com/novnc/websockify.git websockify
 
-      # 7. 后台启动noVNC代理
+      # 7. 后台启动websockify代理
       - name: 启动noVNC服务
         run: |
           cd C:\noVNC
           Start-Process node -ArgumentList "websockify/websockify.js --web . 9000 localhost:5900"
 
-      # ==========可选：开启公网Funnel外网访问，需要先在Tailscale后台开启策略权限==========
+      # 可选：开启外网访问，Tailscale后台提前配置Funnel权限
       # - name: 开放公网Funnel
       #   run: tailscale funnel 9000
 
-      # 8. 无限循环保持虚拟机不回收
+      # 8. 持续循环，防止虚拟机销毁
       - name: 保持运行
         run: |
           while($true){
