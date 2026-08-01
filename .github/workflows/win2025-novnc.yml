@@ -6,7 +6,7 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 340
     steps:
-      # 1. 设置远程账号（修复：检测账号是否已在管理员组，防止重复添加报错终止任务）
+      # 1. 设置远程账号（修复重复添加管理员报错）
       - name: 创建远程账号
         run: |
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
@@ -28,11 +28,12 @@ jobs:
           winget install Tailscale.Tailscale --silent --accept-source-agreements
           Start-Process "C:\Program Files\Tailscale\tailscale.exe" -ArgumentList "up --authkey ${{ secrets.TAILSCALE_AUTHKEY }}" -Wait
 
-      # 4. 安装TigerVNC Server
+      # 4. 安装TigerVNC（更换稳定下载源，指定临时目录）
       - name: 安装TigerVNC
         run: |
-          Invoke-WebRequest -Uri "https://sourceforge.net/projects/tigervnc/files/stable/1.14.0/tigervnc64-winvnc-1.14.0.exe/download" -OutFile vncsetup.exe
-          .\vncsetup.exe /S /v/qn
+          New-Item -ItemType Directory -Path C:\temp -Force
+          Invoke-WebRequest -Uri "https://github.com/TigerVNC/tigervnc/releases/download/v1.14.0/tigervnc64-winvnc-1.14.0.exe" -OutFile C:\temp\vncsetup.exe
+          C:\temp\vncsetup.exe /S /v/qn
           & 'C:\Program Files\TigerVNC\winvnc4.exe' -register
           Set-ItemProperty -Path "HKCU:\Software\TigerVNC\WinVNC4" -Name Password -Value ("password123" | ConvertTo-SecureString -AsPlainText -Force)
           Start-Service WinVNC4
