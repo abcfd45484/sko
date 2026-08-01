@@ -6,8 +6,7 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 340
     steps:
-      # 1. 创建远程账号
-      - name: 创建远程账号 开启RDP
+      - name: 创建远程账号
         run: |
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
           Set-LocalUser -Name runneradmin -Password $securePwd
@@ -15,44 +14,42 @@ jobs:
           if(-not $member){
               Add-LocalGroupMember -Group Administrators -Member runneradmin
           }
-          # 开启RDP
-          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-          Restart-Service TermService -Force
 
-      # 2. 防火墙放行端口
-      - name: 放行防火墙端口
+      - name: 防火墙放行端口
         run: |
-          New-NetFirewallRule -DisplayName "RDP-3389" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
+          New-NetFirewallRule -DisplayName "VNC-5900" -Direction Inbound -LocalPort 5900 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
           New-NetFirewallRule -DisplayName "noVNC-9000" -Direction Inbound -LocalPort 9000 -Protocol TCP -Action Allow -ErrorAction SilentlyContinue
 
-      # 3. 静默安装Tailscale
       - name: 安装Tailscale
         run: |
           winget install Tailscale.Tailscale --silent --accept-source-agreements
-          Start-Process "C:\Program Files\Tailscale\tailscale.exe" -ArgumentList "up --authkey ${{ secrets.TAILSCALE_AUTHKEY }}" -Wait
+          cd "C:\Program Files\Tailscale"
+          .\tailscale.exe up --authkey ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      # 4. 安装Node.js
       - name: 安装NodeJS
         run: winget install OpenJS.NodeJS.LTS --silent
 
-      # 5. 拉取noVNC + websockify
+      - name: 下载安装TigerVNC
+        run: |
+          Invoke-WebRequest -Uri "https://sourceforge.net/projects/tigervnc/files/stable/1.13.0/vnc64-1.13.0.exe/download" -OutFile "$env:TEMP\vncsetup.exe"
+          Start-Process "$env:TEMP\vncsetup.exe" -ArgumentList "/S" -Wait
+
+      - name: 启动 TigerVNC Server
+        run: |
+          Start-Process "C:\Program Files\TigerVNC\winvnc4.exe" -ArgumentList "-run"
+          Start-Sleep 3
+
       - name: 拉取noVNC
         run: |
           git clone https://github.com/novnc/noVNC.git C:\noVNC
           cd C:\noVNC
           git clone https://github.com/novnc/websockify.git websockify
 
-      # 6. 启动websockify，直接转发到本机3389（RDP），不再需要TigerVNC
-      - name: 启动noVNC服务
+      - name: 启动noVNC（转发VNC 5900）
         run: |
           cd C:\noVNC
-          Start-Process node -ArgumentList "websockify/websockify.js --web . 9000 localhost:3389"
+          Start-Process node -ArgumentList "websockify/websockify.js --web . 9000 localhost:5900"
 
-      # 可选：开启公网Funnel外网访问，Tailscale后台提前配置Funnel权限
-      # - name: 开放公网Funnel
-      #   run: tailscale funnel 9000
-
-      # 7. 持续循环保活虚拟机
       - name: 保持运行
         run: |
           while($true){
