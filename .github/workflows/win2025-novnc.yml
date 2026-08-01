@@ -28,12 +28,10 @@ jobs:
           winget install Tailscale.Tailscale --silent --accept-source-agreements
           Start-Process "C:\Program Files\Tailscale\tailscale.exe" -ArgumentList "up --authkey ${{ secrets.TAILSCALE_AUTHKEY }}" -Wait
 
-      # 4. 安装TigerVNC（更换稳定下载源，指定临时目录）
+      # 4. 使用winget直接安装TigerVNC，彻底抛弃手动下载exe
       - name: 安装TigerVNC
         run: |
-          New-Item -ItemType Directory -Path C:\temp -Force
-          Invoke-WebRequest -Uri "https://github.com/TigerVNC/tigervnc/releases/download/v1.14.0/tigervnc64-winvnc-1.14.0.exe" -OutFile C:\temp\vncsetup.exe
-          C:\temp\vncsetup.exe /S /v/qn
+          winget install TigerVNC.TigerVNC --silent --accept-source-agreements
           & 'C:\Program Files\TigerVNC\winvnc4.exe' -register
           Set-ItemProperty -Path "HKCU:\Software\TigerVNC\WinVNC4" -Name Password -Value ("password123" | ConvertTo-SecureString -AsPlainText -Force)
           Start-Service WinVNC4
