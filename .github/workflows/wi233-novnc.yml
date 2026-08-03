@@ -1,0 +1,54 @@
+name: Win2025 Tailscale noVNC网页桌面
+on:
+  workflow_dispatch
+jobs:
+  novnc-host:
+    runs-on: windows-2025
+    timeout-minutes: 350
+    steps:
+      - name: 系统基础配置
+        run: |
+          # 设置runneradmin账号密码
+          $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
+          Set-LocalUser -Name runneradmin -Password $securePwd
+          # 放行防火墙端口 VNC 5900 / noVNC 6080
+          New-NetFirewallRule -DisplayName "AllowVNC" -Direction Inbound -LocalPort 5900 -Protocol TCP -Action Allow
+          New-NetFirewallRule -DisplayName "AllowNoVNC" -Direction Inbound -LocalPort 6080 -Protocol TCP -Action Allow
+
+      - name: 安装Tailscale
+        run: winget install Tailscale.Tailscale --silent --accept-source-agreements --accept-package-agreements
+
+      - name: 接入Tailscale网络
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+        run: |
+          & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
+          Start-Sleep 15
+
+      - name: 下载安装TigerVNC
+        run: |
+          Invoke-WebRequest -Uri "https://sourceforge.net/projects/tigervnc/files/stable/1.13.0/tigervnc-1.13.0-x64.msi/download" -OutFile "$env:TEMP\tigervnc.msi"
+          msiexec /i "$env:TEMP\tigervnc.msi" /qn /norestart
+
+      - name: 配置VNC密码并启动服务
+        run: |
+          # 设置vnc访问密码 123456
+          & "C:\Program Files\TigerVNC\winvnc.exe" -register
+          echo "123456" | & "C:\Program Files\TigerVNC\vncpasswd.exe" -service
+          Start-Process "C:\Program Files\TigerVNC\winvnc.exe"
+
+      - name: 下载noVNC
+        run: |
+          git clone https://github.com/novnc/noVNC C:\noVNC
+          Start-Sleep 3
+
+      - name: 启动noVNC代理（转发至VNC 5900）
+        run: |
+          cd C:\noVNC
+          .\utils\websockify.exe 6080 localhost:5900 &
+
+      - name: 常驻保持虚拟机运行
+        run: |
+          while($true) {
+            Start-Sleep 60
+          }
