@@ -23,20 +23,23 @@ jobs:
           & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
           Start-Sleep 15
 
-      - name: winget 安装 TigerVNC（无需手动下载，解决网络403/反爬）
+      - name: 下载压缩版TigerVNC（便携绿色版，无需安装）
         run: |
-          winget install TigerVNC.TigerVNC --silent --accept-source-agreements --accept-package-agreements
-          Start-Sleep 8
+          $url = "https://github.com/TigerVNC/tigervnc/releases/download/v1.13.0/tigervnc-1.13.0-x64.zip"
+          $zipPath = "$env:TEMP\tigervnc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
+          Expand-Archive -Path $zipPath -DestinationPath C:\TigerVNC -Force
+          Start-Sleep 5
 
       - name: 配置VNC密码并启动服务
         run: |
-          $vncPath = "C:\Program Files\TigerVNC\winvnc.exe"
+          $vncPath = "C:\TigerVNC\winvnc.exe"
           if(Test-Path $vncPath){
             & $vncPath -register
-            echo "123456" | & "C:\Program Files\TigerVNC\vncpasswd.exe" -service
+            echo "123456" | & "C:\TigerVNC\vncpasswd.exe" -service
             Start-Process $vncPath
           } else {
-            Write-Error "TigerVNC安装失败，程序不存在"
+            Write-Error "绿色版TigerVNC解压失败"
             exit 1
           }
 
