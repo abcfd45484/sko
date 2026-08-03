@@ -1,4 +1,4 @@
-name: Win2022 Tailscale RDP
+name: Win2022 RDP 公网Cloudflared隧道（带虚拟声卡音频支持）
 on:
   workflow_dispatch
 jobs:
@@ -12,12 +12,23 @@ jobs:
           Restart-Service TermService -Force
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
           Set-LocalUser -Name runneradmin -Password $securePwd
-          New-NetFirewallRule -DisplayName "AllowRDP" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
+          New-NetFirewallRule -DisplayName "AllowRDP3389" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
 
-      - name: 下载并安装 Tailscale（有效直链）
+      - name: 安装 VB-Cable 虚拟声卡（解决RDP无声音）
+        run: |
+          $url = "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack43.zip"
+          $zipPath = "$env:TEMP\vbcable.zip"
+          $extractPath = "$env:TEMP\vbcable"
+          Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
+          Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+          Start-Process "$extractPath\VBCABLE_Setup_x64.exe" -ArgumentList "-i","-h" -Wait
+          Set-Service Audiosrv -StartupType Automatic
+          Start-Service Audiosrv
+
+      - name: 安装 Tailscale（内网备用通道）
         run: |
           $installer = "$env:TEMP\tailscale-setup.exe"
-          $dlUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
+          $dlUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-amd64.exe"
           Invoke-WebRequest -Uri $dlUrl -OutFile $installer -UseBasicParsing
           Start-Process -FilePath $installer -ArgumentList "/quiet" -Wait
 
@@ -28,7 +39,13 @@ jobs:
           & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
           Start-Sleep 15
 
-      - name: 持续常驻，防止实例销毁
+      - name: 启动Cloudflared TCP隧道转发RDP（前台运行，可查看隧道地址）
+        run: |
+          $cfPath = "$env:TEMP\cloudflared.exe"
+          Invoke-WebRequest "https://github.com/cloudflare/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile $cfPath -UseBasicParsing
+          & $cfPath tunnel --no-autoupdate tcp://127.0.0.1:3389
+
+      - name: 持续保活实例
         run: |
           while($true){
             Start-Sleep 60
