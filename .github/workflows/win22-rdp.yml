@@ -14,16 +14,10 @@ jobs:
           Set-LocalUser -Name runneradmin -Password $securePwd
           New-NetFirewallRule -DisplayName "AllowRDP" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
 
-      - name: 安装 VB-Cable 虚拟声卡（解决RDP无音频）
+      - name: 启动Windows音频服务（优先启用系统音频）
         run: |
-          $url = "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack43.zip"
-          $zipPath = "$env:TEMP\vbcable.zip"
-          $extractPath = "$env:TEMP\vbcable"
-          Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
-          Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
-          Start-Process "$extractPath\VBCABLE_Setup_x64.exe" -ArgumentList "-i","-h" -Wait
           Set-Service Audiosrv -StartupType Automatic
-          Start-Service Audiosrv
+          Start-Service Audiosrv -ErrorAction SilentlyContinue
 
       - name: 下载并安装 Tailscale（有效直链）
         run: |
