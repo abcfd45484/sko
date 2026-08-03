@@ -23,11 +23,9 @@ jobs:
           & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
           Start-Sleep 15
 
-      - name: 下载 TigerVNC 稳定离线包（官方直链，无跳转）
+      - name: winget 安装 TigerVNC（无需手动下载，解决网络403/反爬）
         run: |
-          $url = "https://github.com/TigerVNC/tigervnc/releases/download/v1.13.0/tigervnc-1.13.0-x64.msi"
-          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\tigervnc.msi" -UseBasicParsing
-          msiexec /i "$env:TEMP\tigervnc.msi" /qn /norestart
+          winget install TigerVNC.TigerVNC --silent --accept-source-agreements --accept-package-agreements
           Start-Sleep 8
 
       - name: 配置VNC密码并启动服务
