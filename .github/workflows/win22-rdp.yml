@@ -1,0 +1,31 @@
+name: Win2022 Tailscale RDP
+on:
+  workflow_dispatch
+jobs:
+  rdp-host:
+    runs-on: windows-2022
+    timeout-minutes: 350
+    steps:
+      - name: 开启RDP远程桌面
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Restart-Service TermService -Force
+          $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
+          Set-LocalUser -Name runneradmin -Password $securePwd
+          New-NetFirewallRule -DisplayName "AllowRDP" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
+
+      - name: 安装 Tailscale
+        run: winget install Tailscale.Tailscale --silent --accept-source-agreements --accept-package-agreements
+
+      - name: 启动Tailscale组网
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+        run: |
+          & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
+          Start-Sleep 15
+
+      - name: 持续常驻，防止实例销毁
+        run: |
+          while($true){
+            Start-Sleep 60
+          }
