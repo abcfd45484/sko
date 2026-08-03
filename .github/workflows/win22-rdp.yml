@@ -14,10 +14,11 @@ jobs:
           Set-LocalUser -Name runneradmin -Password $securePwd
           New-NetFirewallRule -DisplayName "AllowRDP" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
 
-      - name: 下载并安装 Tailscale
+      - name: 下载并安装 Tailscale（有效直链）
         run: |
           $installer = "$env:TEMP\tailscale-setup.exe"
-          Invoke-WebRequest -Uri "https://tailscale.com/install.exe" -OutFile $installer -UseBasicParsing
+          $dlUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
+          Invoke-WebRequest -Uri $dlUrl -OutFile $installer -UseBasicParsing
           Start-Process -FilePath $installer -ArgumentList "/quiet" -Wait
 
       - name: 启动Tailscale组网
