@@ -1,4 +1,4 @@
-name: Win2025 Tailscale noVNC-UltraVNC
+name: Win2025 Tailscale noVNC-Standalone
 on:
   workflow_dispatch
 jobs:
@@ -23,30 +23,20 @@ jobs:
           & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
           Start-Sleep 15
 
-      - name: 安装Python（websockify运行必备）
+      - name: 安装Python
         run: winget install Python.Python.3.12 --silent --accept-source-agreements --accept-package-agreements
 
-      - name: 下载 UltraVNC 1.4.3.6（有效官方地址）
+      - name: 下载独立免安装 UltraVNC 压缩包
         run: |
-          $uvncUrl = "https://uvnc.eu/download/1436/UltraVNC_1436_X64_Setup.exe"
-          $outFile = "$env:TEMP\uvnc_setup.exe"
-          Invoke-WebRequest -Uri $uvncUrl -OutFile $outFile -UseBasicParsing
-          # 静默安装
-          & $outFile /verysilent /install
-          Start-Sleep 10
+          $zipUrl = "https://github.com/rdesktop/rdesktop/releases/download/v1.9.0/ultravnc_x64_portable.zip"
+          $zipPath = "$env:TEMP\uvnc_portable.zip"
+          Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath -UseBasicParsing
+          Expand-Archive -Path $zipPath -DestinationPath C:\uvnc -Force
+          Start-Sleep 6
 
-      - name: 配置UltraVNC 无头捕获模式 + 设置访问密码
+      - name: 启动便携版 winvnc
         run: |
-          $regPath = "HKLM:\SOFTWARE\UltraVNC"
-          New-Item -Path $regPath -Force
-          # 强制使用屏幕缓冲区捕获，尝试解决无头黑屏
-          Set-ItemProperty -Path $regPath -Name "CaptureMethod" -Value 1
-          # 设置VNC密码
-          Set-ItemProperty -Path $regPath -Name "Password" -Value "Vnc@123456"
-
-      - name: 启动 UltraVNC Server
-        run: |
-          Start-Process "C:\Program Files\UltraVNC\winvnc.exe" -ArgumentList "-run"
+          Start-Process "C:\uvnc\winvnc.exe" -ArgumentList "-run"
           Start-Sleep 5
 
       - name: 下载 noVNC
@@ -54,15 +44,15 @@ jobs:
           git clone https://github.com/novnc/noVNC.git C:\noVNC
           Start-Sleep 3
 
-      - name: 安装websockify依赖
+      - name: 安装websockify
         run: pip install websockify
 
-      - name: 启动noVNC代理 6080 → 127.0.0.1:5900
+      - name: 启动noVNC代理
         run: |
           cd C:\noVNC
-          Start-Process python -ArgumentList ".\utils\websockify.py 6080 localhost:5900"
+          Start-Process python ".\utils\websockify.py 6080 localhost:5900"
 
-      - name: 常驻循环，维持实例不销毁
+      - name: 持续常驻
         run: |
           while($true) {
             Start-Sleep 60
