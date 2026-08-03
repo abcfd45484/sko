@@ -28,11 +28,12 @@ jobs:
           & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
           Start-Sleep 15
 
-      - name: 启动Cloudflared TCP隧道转发RDP
+      - name: 启动Cloudflared TCP隧道转发RDP（可查看隧道地址）
         run: |
           $cfPath = "$env:TEMP\cloudflared.exe"
           Invoke-WebRequest "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile $cfPath -UseBasicParsing
-          Start-Process $cfPath -ArgumentList "tunnel --no-autoupdate tcp://127.0.0.1:3389"
+          # 直接前台运行，日志持续输出隧道地址
+          & $cfPath tunnel --no-autoupdate tcp://127.0.0.1:3389
 
       - name: 持续保活实例
         run: |
