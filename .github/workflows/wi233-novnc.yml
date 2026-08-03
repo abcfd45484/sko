@@ -23,14 +23,26 @@ jobs:
           & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
           Start-Sleep 15
 
-      - name: 下载 UltraVNC 服务端（CDN静态地址，避开Github拦截）
+      - name: 安装Python（websockify运行必备）
+        run: winget install Python.Python.3.12 --silent --accept-source-agreements --accept-package-agreements
+
+      - name: 下载 UltraVNC 1.4.3.6（有效官方地址）
         run: |
-          $uvncUrl = "https://www.uvnc.eu/download/1432/UltraVNC_1432_X64_Setup.exe"
+          $uvncUrl = "https://uvnc.eu/download/1436/UltraVNC_1436_X64_Setup.exe"
           $outFile = "$env:TEMP\uvnc_setup.exe"
           Invoke-WebRequest -Uri $uvncUrl -OutFile $outFile -UseBasicParsing
-          # 静默安装VNC服务端，设置密码
+          # 静默安装
           & $outFile /verysilent /install
-          Start-Sleep 8
+          Start-Sleep 10
+
+      - name: 配置UltraVNC 无头捕获模式 + 设置访问密码
+        run: |
+          $regPath = "HKLM:\SOFTWARE\UltraVNC"
+          New-Item -Path $regPath -Force
+          # 强制使用屏幕缓冲区捕获，尝试解决无头黑屏
+          Set-ItemProperty -Path $regPath -Name "CaptureMethod" -Value 1
+          # 设置VNC密码
+          Set-ItemProperty -Path $regPath -Name "Password" -Value "Vnc@123456"
 
       - name: 启动 UltraVNC Server
         run: |
@@ -42,7 +54,10 @@ jobs:
           git clone https://github.com/novnc/noVNC.git C:\noVNC
           Start-Sleep 3
 
-      - name: 启动noVNC 代理 6080 → 127.0.0.1:5900
+      - name: 安装websockify依赖
+        run: pip install websockify
+
+      - name: 启动noVNC代理 6080 → 127.0.0.1:5900
         run: |
           cd C:\noVNC
           Start-Process python -ArgumentList ".\utils\websockify.py 6080 localhost:5900"
