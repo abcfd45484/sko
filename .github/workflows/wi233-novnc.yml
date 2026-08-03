@@ -1,4 +1,4 @@
-name: Win2025 Tailscale noVNC网页桌面
+name: Win2025 Tailscale noVNC-UltraVNC
 on:
   workflow_dispatch
 jobs:
@@ -6,54 +6,48 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 350
     steps:
-      - name: 系统基础配置
+      - name: 系统基础配置 + 放行端口
         run: |
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
           Set-LocalUser -Name runneradmin -Password $securePwd
-          New-NetFirewallRule -DisplayName "AllowVNC" -Direction Inbound -LocalPort 5900 -Protocol TCP -Action Allow
-          New-NetFirewallRule -DisplayName "AllowNoVNC" -Direction Inbound -LocalPort 6080 -Protocol TCP -Action Allow
+          New-NetFirewallRule -DisplayName "VNC-5900" -Direction Inbound -LocalPort 5900 -Protocol TCP -Action Allow
+          New-NetFirewallRule -DisplayName "noVNC-6080" -Direction Inbound -LocalPort 6080 -Protocol TCP -Action Allow
 
-      - name: 安装Tailscale
+      - name: 安装 Tailscale
         run: winget install Tailscale.Tailscale --silent --accept-source-agreements --accept-package-agreements
 
-      - name: 接入Tailscale网络
+      - name: Tailscale 接入组网
         env:
           TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
         run: |
           & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
           Start-Sleep 15
 
-      - name: 下载压缩版TigerVNC（便携绿色版，无需安装）
+      - name: 下载 UltraVNC 服务端（CDN静态地址，避开Github拦截）
         run: |
-          $url = "https://github.com/TigerVNC/tigervnc/releases/download/v1.13.0/tigervnc-1.13.0-x64.zip"
-          $zipPath = "$env:TEMP\tigervnc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
-          Expand-Archive -Path $zipPath -DestinationPath C:\TigerVNC -Force
+          $uvncUrl = "https://www.uvnc.eu/download/1432/UltraVNC_1432_X64_Setup.exe"
+          $outFile = "$env:TEMP\uvnc_setup.exe"
+          Invoke-WebRequest -Uri $uvncUrl -OutFile $outFile -UseBasicParsing
+          # 静默安装VNC服务端，设置密码
+          & $outFile /verysilent /install
+          Start-Sleep 8
+
+      - name: 启动 UltraVNC Server
+        run: |
+          Start-Process "C:\Program Files\UltraVNC\winvnc.exe" -ArgumentList "-run"
           Start-Sleep 5
 
-      - name: 配置VNC密码并启动服务
+      - name: 下载 noVNC
         run: |
-          $vncPath = "C:\TigerVNC\winvnc.exe"
-          if(Test-Path $vncPath){
-            & $vncPath -register
-            echo "123456" | & "C:\TigerVNC\vncpasswd.exe" -service
-            Start-Process $vncPath
-          } else {
-            Write-Error "绿色版TigerVNC解压失败"
-            exit 1
-          }
-
-      - name: 下载noVNC
-        run: |
-          git clone https://github.com/novnc/noVNC C:\noVNC
+          git clone https://github.com/novnc/noVNC.git C:\noVNC
           Start-Sleep 3
 
-      - name: 启动noVNC代理（转发至VNC 5900）
+      - name: 启动noVNC 代理 6080 → 127.0.0.1:5900
         run: |
           cd C:\noVNC
-          Start-Process .\utils\websockify.exe 6080 localhost:5900
+          Start-Process python -ArgumentList ".\utils\websockify.py 6080 localhost:5900"
 
-      - name: 常驻保持虚拟机运行
+      - name: 常驻循环，维持实例不销毁
         run: |
           while($true) {
             Start-Sleep 60
