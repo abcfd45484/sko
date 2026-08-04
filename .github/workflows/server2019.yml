@@ -14,12 +14,12 @@ jobs:
           Set-LocalUser -Name runneradmin -Password $securePwd
           New-NetFirewallRule -DisplayName "AllowRDP" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
 
-      - name: 启动Windows音频服务（优先启用系统音频）
+      - name: 启动Windows音频服务
         run: |
           Set-Service Audiosrv -StartupType Automatic
           Start-Service Audiosrv -ErrorAction SilentlyContinue
 
-      - name: 下载并安装 Tailscale（有效直链）
+      - name: 下载并安装 Tailscale
         run: |
           $installer = "$env:TEMP\tailscale-setup.exe"
           $dlUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
