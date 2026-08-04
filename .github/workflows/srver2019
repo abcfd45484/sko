@@ -1,0 +1,40 @@
+name: Win2019 Tailscale RDP
+on:
+  workflow_dispatch
+jobs:
+  rdp-host:
+    runs-on: windows-2019
+    timeout-minutes: 350
+    steps:
+      - name: 开启RDP远程桌面
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+          Restart-Service TermService -Force
+          $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
+          Set-LocalUser -Name runneradmin -Password $securePwd
+          New-NetFirewallRule -DisplayName "AllowRDP" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
+
+      - name: 启动Windows音频服务（优先启用系统音频）
+        run: |
+          Set-Service Audiosrv -StartupType Automatic
+          Start-Service Audiosrv -ErrorAction SilentlyContinue
+
+      - name: 下载并安装 Tailscale（有效直链）
+        run: |
+          $installer = "$env:TEMP\tailscale-setup.exe"
+          $dlUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
+          Invoke-WebRequest -Uri $dlUrl -OutFile $installer -UseBasicParsing
+          Start-Process -FilePath $installer -ArgumentList "/quiet" -Wait
+
+      - name: 启动Tailscale组网
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+        run: |
+          & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
+          Start-Sleep 15
+
+      - name: 持续常驻，防止实例销毁
+        run: |
+          while($true){
+            Start-Sleep 60
+          }
