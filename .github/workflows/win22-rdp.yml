@@ -3,7 +3,7 @@ on:
   workflow_dispatch
 jobs:
   rdp-host:
-    runs-on: windows-2016
+    runs-on: windows-2022
     timeout-minutes: 350
     steps:
       - name: 开启RDP远程桌面
