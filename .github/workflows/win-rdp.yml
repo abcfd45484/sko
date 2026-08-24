@@ -1,6 +1,11 @@
 name: Win2025 Tailscale RDP【常驻修复版】
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/win-rdp.yml'
 jobs:
   rdp-host:
     runs-on: windows-2025
