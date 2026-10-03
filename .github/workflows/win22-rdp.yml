@@ -19,7 +19,7 @@ jobs:
           Set-Service Audiosrv -StartupType Automatic
           Start-Service Audiosrv -ErrorAction SilentlyContinue
 
-      - name: 下载frp原版客户端（Github，海外可访问）
+      - name: 下载frp原版客户端
         run: |
           $dlPath = "C:\Users\runneradmin\Downloads\frp.zip"
           Invoke-WebRequest -Uri "https://github.com/fatedier/frp/releases/download/v0.51.2/frp_0.51.2_windows_386.zip" -OutFile $dlPath
@@ -30,24 +30,21 @@ jobs:
           $extractDir = "C:\Users\runneradmin\Downloads\"
           Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
 
-      - name: 生成frpc.ini（整块写入，非逐行echo）
+      - name: 生成frpc.ini
         run: |
-          $iniContent = @"
-[common]
-server_addr = 47.109.152.106
-server_port = 7000
-tls_enable = false
-user = qxCHUlNnkWPhLcQ9pXYuIDiH
-token = ChmlFrpToken
-
-[am4TrUiZ]
-type = tcp
-local_ip = 127.0.0.1
-local_port = 3389
-remote_port = 33077
-"@
           $iniPath = "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          $iniContent | Out-File $iniPath -Encoding utf8
+          "[common]" | Out-File $iniPath
+          "server_addr = 47.109.152.106" | Add-Content $iniPath
+          "server_port = 7000" | Add-Content $iniPath
+          "tls_enable = false" | Add-Content $iniPath
+          "user = qxCHUlNnKWPhlcQ9pYuUIH" | Add-Content $iniPath
+          "token = ChmlFrpToken" | Add-Content $iniPath
+          "" | Add-Content $iniPath
+          "[am4TrUZ]" | Add-Content $iniPath
+          "type = tcp" | Add-Content $iniPath
+          "local_ip = 127.0.0.1" | Add-Content $iniPath
+          "local_port = 3389" | Add-Content $iniPath
+          "remote_port = 33077" | Add-Content $iniPath
 
       - name: 查看frpc.ini内容
         run: |
