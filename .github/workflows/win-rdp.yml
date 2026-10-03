@@ -37,11 +37,11 @@ jobs:
           echo "user = qxCHUlNnkWPhLcQ9pXYuIDiH" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "token = ChmlFrpToken" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "[am4TrUiZ]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "[qii460qp]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "type = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "remote_port = 33077" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "remote_port = 36713" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
 
       - name: 修改RDP注册表关闭NLA
         run: |
