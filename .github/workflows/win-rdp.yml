@@ -6,28 +6,32 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 350
     steps:
-      - name: 开启RDP远程桌面
+      - name: 开启RDP远程桌面 + 设置runneradmin密码
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Restart-Service TermService -Force
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
           Set-LocalUser -Name runneradmin -Password $securePwd
+
       - name: 防火墙放行3389端口
         run: |
           New-NetFirewallRule -DisplayName "RDP-TCP-3389" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
-      - name: 下载 ChmlFrp 压缩包到 Downloads
+
+      - name: 下载 ChmlFrp 压缩包到Downloads
         run: |
           $dlPath = "C:\Users\runneradmin\Downloads\ChmlFrp.zip"
-          Invoke-WebRequest -Uri "shturl.cc/2MbApDNoWXKfIqbnwcKi4hbHQOkOaEumarvUEmSBwcxsCsqDRMOnsd2UhzW9O" -OutFile $dlPath
+          Invoke-WebRequest -Uri "https://shturl.cc/aQep/download/ChmlFrp-0.51.2_251023_2_windows_386.zip" -OutFile $dlPath
+
       - name: 解压 ChmlFrp
         run: |
           $zipFile = "C:\Users\runneradmin\Downloads\ChmlFrp.zip"
           $extractDir = "C:\Users\runneradmin\Downloads\"
           Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
-      - name: 生成 frpc.ini 配置文件
+
+      - name: 写入frpc.ini配置文件
         run: |
-          $iniContent = @"
-[common]
+          $iniPath = "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          $content = '[common]
 server_addr = 47.109.152.106
 server_port = 7000
 tls_enable = false
@@ -38,15 +42,15 @@ token = ChmlFrpToken
 type = tcp
 local_ip = 127.0.0.1
 local_port = 3389
-remote_port = 33077
-"@
-          $iniPath = "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
-          $iniContent | Out-File -FilePath $iniPath -Encoding ASCII
+remote_port = 33077'
+          $content | Out-File -FilePath $iniPath -Encoding ASCII
+
       - name: 修改RDP注册表，关闭NLA，修改SecurityLayer
         run: |
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v SecurityLayer /t REG_DWORD /d 0 /f
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v UserAuthentication /t REG_DWORD /d 0 /f
-      - name: 启动frpc并保持实例常驻
+
+      - name: 启动frpc并常驻保持实例运行
         run: |
           cd C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386
           .\frpc.exe -u qxCHUlNnkWPhLcQ9pXYuIDiH -p 358919
