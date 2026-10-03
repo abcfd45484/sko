@@ -20,7 +20,7 @@ jobs:
       - name: 下载 ChmlFrp 压缩包到Downloads
         run: |
           $dlPath = "C:\Users\runneradmin\Downloads\ChmlFrp.zip"
-          Invoke-WebRequest -Uri "shturl.cc/aNWdhEQuYKe4XiKMQxYQ7yZKgu6DodExctORcwdsvx367tWeQHJmk2HJ0n7bW" -OutFile $dlPath
+          Invoke-WebRequest -Uri "https://cf-v1.uapis.cn/download/ChmlFrp-0.51.2_251023_2_windows_386.zip" -OutFile $dlPath
 
       - name: 解压 ChmlFrp
         run: |
@@ -28,10 +28,9 @@ jobs:
           $extractDir = "C:\Users\runneradmin\Downloads\"
           Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
 
-      - name: 生成 frpc.ini
+      - name: 写入frpc.ini配置
         run: |
-          $iniPath = "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
-          $content = @'
+          @'
 [common]
 server_addr = 47.109.152.106
 server_port = 7000
@@ -44,18 +43,17 @@ type = tcp
 local_ip = 127.0.0.1
 local_port = 3389
 remote_port = 33077
-'@
-          $content | Out-File -FilePath $iniPath -Encoding ASCII
+'@ | Out-File "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini" -Encoding ASCII
 
       - name: 修改RDP注册表，关闭NLA
         run: |
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v SecurityLayer /t REG_DWORD /d 0 /f
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v UserAuthentication /t REG_DWORD /d 0 /f
 
-      - name: 启动frpc并常驻实例
+      - name: 启动frpc，保持实例常驻
         run: |
           cd C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386
           .\frpc.exe
-          while($true){
+          while($true) {
             Start-Sleep -Seconds 600
           }
