@@ -30,12 +30,8 @@ jobs:
           $extractDir = "C:\Users\runneradmin\Downloads\"
           Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
 
-      - name: 生成frpc.ini（Base64解码写入，无多行yaml问题）
-        run: |
-          $base64str = "W2NvbW1vbl0Kc2VydmVyX2FkZHIgPS0gNDcuMTA5LjE1Mi4xMDYKc2VydmVyX3BvcnQgPS0gNzAwMAp0bHNfZW5hYmxlID0gZmFsc2UKdXNlciA9IHF4Q0hVbE5uS1dQaGxjUTlwWXVVSUgKdG9rZW4gPSBDaG1sRnJwVG9rZW4KClthbTRUclVaIgp0eXBlID0gdGNwCmxvY2FsX2lwID0gMTI3LjAuMC4xCmxvY2FsX3BvcnQgPSAzMzg5CnJlbW90ZV9wb3J0ID0gMzMwNzc="
-          $rawBytes = [Convert]::FromBase64String($base64str)
-          $iniFile = "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          [System.IO.File]::WriteAllBytes($iniFile, $rawBytes)
+      - name: 生成frpc.ini
+        run: $b="W2NvbW1vbl0Kc2VydmVyX2FkZHIgPS0gNDcuMTA5LjE1Mi4xMDYKc2VydmVyX3BvcnQgPS0gNzAwMAp0bHNfZW5hYmxlID0gZmFsc2UKdXNlciA9IHF4Q0hVbE5uS1dQaGxjUTlwWXVVSUgKdG9rZW4gPSBDaG1sRnJwVG9rZW4KClthbTRUclVaIgp0eXBlID0gdGNwCmxvY2FsX2lwID0gMTI3LjAuMC4xCmxvY2FsX3BvcnQgPSAzMzg5CnJlbW90ZV9wb3J0ID0gMzMwNzc=";[IO.File]::WriteAllBytes("C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini",[Convert]::FromBase64String($b))
 
       - name: 查看frpc.ini内容
         run: |
