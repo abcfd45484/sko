@@ -20,7 +20,7 @@ jobs:
       - name: 下载ChmlFrp
         run: |
           $dlPath = "C:\Users\runneradmin\Downloads\ChmlFrp.zip"
-          Invoke-WebRequest -Uri "https://shturl.cc/eAgP90FlIPftvVG872QHsGMh1vc8p8EmH6dbNeOgl7JPkRyrdvQD3oXX9ou4E" -OutFile $dlPath
+          Invoke-WebRequest -Uri "https://chml.eu.org/res/frp/ChmlFrp-0.51.2_251023_2_windows_386.zip" -OutFile $dlPath
 
       - name: 解压ChmlFrp
         run: |
