@@ -1,4 +1,4 @@
-name: Win2025 Tailscale RDP【常驻修复版】
+name: Win2025 ChmlFrp RDP【常驻修复版】
 on:
   workflow_dispatch
 jobs:
@@ -6,22 +6,50 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 350
     steps:
-      - name: 开启RDP远程桌面（移除中文防火墙命令）
+      - name: 开启RDP远程桌面
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Restart-Service TermService -Force
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
           Set-LocalUser -Name runneradmin -Password $securePwd
-
-      - name: winget 静默安装 Tailscale
-        run: winget install Tailscale.Tailscale --silent --accept-package-agreements --accept-source-agreements
-
-      - name: 启动Tailscale + 无限循环常驻防止虚拟机销毁
-        env:
-          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
+      - name: 防火墙放行3389端口
         run: |
-          Start-Service Tailscale
-          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=$env:TS_AUTHKEY --accept-routes
+          New-NetFirewallRule -DisplayName "RDP-TCP-3389" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
+      - name: 下载 ChmlFrp 压缩包到 Downloads
+        run: |
+          $dlPath = "C:\Users\runneradmin\Downloads\ChmlFrp.zip"
+          Invoke-WebRequest -Uri "https://cf-v1.uapis.cn/download/ChmlFrp-0.51.2_251023_2_windows_386.zip" -OutFile $dlPath
+      - name: 解压 ChmlFrp
+        run: |
+          $zipFile = "C:\Users\runneradmin\Downloads\ChmlFrp.zip"
+          $extractDir = "C:\Users\runneradmin\Downloads\"
+          Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
+      - name: 生成 frpc.ini 配置文件
+        run: |
+          $iniContent = @"
+[common]
+server_addr = 47.109.152.106
+server_port = 7000
+tls_enable = false
+user = qxCHUlNnkWPhLcQ9pXYuIDiH
+token = ChmlFrpToken
+
+[am4TrUiZ]
+type = tcp
+local_ip = 127.0.0.1
+local_port = 3389
+remote_port = 33077
+"@
+          $iniPath = "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          $iniContent | Out-File -FilePath $iniPath -Encoding ASCII
+      - name: 修改RDP注册表，关闭NLA，修改SecurityLayer
+        run: |
+          reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v SecurityLayer /t REG_DWORD /d 0 /f
+          reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v UserAuthentication /t REG_DWORD /d 0 /f
+      - name: 启动frpc并保持实例常驻
+        run: |
+          cd C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386
+          .\frpc.exe -u qxCHUlNnkWPhLcQ9pXYuIDiH -p 358919
           while($true){
             Start-Sleep -Seconds 600
           }
