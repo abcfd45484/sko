@@ -1,4 +1,4 @@
-name: Win2025 ChmlFrp RDP【常驻修复版】
+name: Win2025 ChmlFrp RDP
 on:
   workflow_dispatch
 jobs:
@@ -6,54 +6,50 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 350
     steps:
-      - name: 开启RDP远程桌面 + 设置runneradmin密码
+      - name: 开启RDP + 设置runneradmin密码
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Restart-Service TermService -Force
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
           Set-LocalUser -Name runneradmin -Password $securePwd
 
-      - name: 防火墙放行3389端口
+      - name: 放行3389防火墙
         run: |
           New-NetFirewallRule -DisplayName "RDP-TCP-3389" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
 
-      - name: 下载 ChmlFrp 压缩包到Downloads
+      - name: 下载ChmlFrp
         run: |
           $dlPath = "C:\Users\runneradmin\Downloads\ChmlFrp.zip"
-          Invoke-WebRequest -Uri "https://cf-v1.uapis.cn/download/ChmlFrp-0.51.2_251023_2_windows_386.zip" -OutFile $dlPath
+          Invoke-WebRequest -Uri "https://shturl.cc/eAgP90FlIPftvVG872QHsGMh1vc8p8EmH6dbNeOgl7JPkRyrdvQD3oXX9ou4E" -OutFile $dlPath
 
-      - name: 解压 ChmlFrp
+      - name: 解压ChmlFrp
         run: |
           $zipFile = "C:\Users\runneradmin\Downloads\ChmlFrp.zip"
           $extractDir = "C:\Users\runneradmin\Downloads\"
           Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
 
-      - name: 写入frpc.ini配置
+      - name: 生成frpc.ini
         run: |
-          @'
-[common]
-server_addr = 47.109.152.106
-server_port = 7000
-tls_enable = false
-user = qxCHUlNnkWPhLcQ9pXYuIDiH
-token = ChmlFrpToken
+          echo "[common]" > "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "server_addr = 47.109.152.106" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "server_port = 7000" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "tls_enable = false" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "user = qxCHUlNnkWPhLcQ9pXYuIDiH" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "token = ChmlFrpToken" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "[am4TrUiZ]" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "type = tcp" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
+          echo "remote_port = 33077" >> "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini"
 
-[am4TrUiZ]
-type = tcp
-local_ip = 127.0.0.1
-local_port = 3389
-remote_port = 33077
-'@ | Out-File "C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386\frpc.ini" -Encoding ASCII
-
-      - name: 修改RDP注册表，关闭NLA
+      - name: 修改RDP注册表关闭NLA
         run: |
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v SecurityLayer /t REG_DWORD /d 0 /f
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v UserAuthentication /t REG_DWORD /d 0 /f
 
-      - name: 启动frpc，保持实例常驻
+      - name: 启动frpc常驻
         run: |
           cd C:\Users\runneradmin\Downloads\ChmlFrp-0.51.2_251023_2_windows_386
           .\frpc.exe
-          while($true) {
-            Start-Sleep -Seconds 600
-          }
+          while($true){Start-Sleep 600}
