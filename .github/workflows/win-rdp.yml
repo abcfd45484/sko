@@ -19,7 +19,7 @@ jobs:
           Set-Service Audiosrv -StartupType Automatic
           Start-Service Audiosrv -ErrorAction SilentlyContinue
 
-      - name: 下载frp原版客户端（Github，海外可访问）
+      - name: 下载frp原版客户端
         run: |
           $dlPath = "C:\Users\runneradmin\Downloads\frp.zip"
           Invoke-WebRequest -Uri "https://github.com/fatedier/frp/releases/download/v0.51.2/frp_0.51.2_windows_386.zip" -OutFile $dlPath
@@ -30,21 +30,12 @@ jobs:
           $extractDir = "C:\Users\runneradmin\Downloads\"
           Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
 
-      - name: 生成frpc.ini
-        run: >
-          $iniPath = "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini";
-          '[common]
-          server_addr = 47.109.152.106
-          server_port = 7000
-          tls_enable = false
-          user = qxCHUlNnkWPhLcQ9pXYuIDiH
-          token = ChmlFrpToken
-
-          [am4TrUiZ]
-          type = tcp
-          local_ip = 127.0.0.1
-          local_port = 3389
-          remote_port = 33077' | Out-File $iniPath -Encoding utf8
+      - name: 生成frpc.ini（Base64解码写入，无多行yaml问题）
+        run: |
+          $base64str = "W2NvbW1vbl0Kc2VydmVyX2FkZHIgPS0gNDcuMTA5LjE1Mi4xMDYKc2VydmVyX3BvcnQgPS0gNzAwMAp0bHNfZW5hYmxlID0gZmFsc2UKdXNlciA9IHF4Q0hVbE5uS1dQaGxjUTlwWXVVSUgKdG9rZW4gPSBDaG1sRnJwVG9rZW4KClthbTRUclVaIgp0eXBlID0gdGNwCmxvY2FsX2lwID0gMTI3LjAuMC4xCmxvY2FsX3BvcnQgPSAzMzg5CnJlbW90ZV9wb3J0ID0gMzMwNzc="
+          $rawBytes = [Convert]::FromBase64String($base64str)
+          $iniFile = "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          [System.IO.File]::WriteAllBytes($iniFile, $rawBytes)
 
       - name: 查看frpc.ini内容
         run: |
