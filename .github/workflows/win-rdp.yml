@@ -30,10 +30,10 @@ jobs:
           $extractDir = "C:\Users\runneradmin\Downloads\"
           Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
 
-      - name: 生成frpc.ini（整块写入，非逐行echo）
+      - name: 生成frpc.ini（整块文本写入，无here-string，规避yaml报错）
         run: |
-          $iniContent = @"
-[common]
+          $iniPath = "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          @"[common]
 server_addr = 47.109.152.106
 server_port = 7000
 tls_enable = false
@@ -44,10 +44,7 @@ token = ChmlFrpToken
 type = tcp
 local_ip = 127.0.0.1
 local_port = 3389
-remote_port = 33077
-"@
-          $iniPath = "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          $iniContent | Out-File $iniPath -Encoding utf8
+remote_port = 33077"@ | Out-File $iniPath -Encoding utf8
 
       - name: 查看frpc.ini内容
         run: |
