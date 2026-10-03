@@ -19,7 +19,7 @@ jobs:
           Set-Service Audiosrv -StartupType Automatic
           Start-Service Audiosrv -ErrorAction SilentlyContinue
 
-      - name: 下载frp原版客户端
+      - name: 下载frp原版客户端（Github，海外可访问）
         run: |
           $dlPath = "C:\Users\runneradmin\Downloads\frp.zip"
           Invoke-WebRequest -Uri "https://github.com/fatedier/frp/releases/download/v0.51.2/frp_0.51.2_windows_386.zip" -OutFile $dlPath
@@ -32,19 +32,18 @@ jobs:
 
       - name: 生成frpc.ini
         run: |
-          $iniPath = "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          "[common]" | Out-File $iniPath
-          "server_addr = 47.109.152.106" | Add-Content $iniPath
-          "server_port = 7000" | Add-Content $iniPath
-          "tls_enable = false" | Add-Content $iniPath
-          "user = qxCHUlNnKWPhlcQ9pYuUIH" | Add-Content $iniPath
-          "token = ChmlFrpToken" | Add-Content $iniPath
-          "" | Add-Content $iniPath
-          "[am4TrUZ]" | Add-Content $iniPath
-          "type = tcp" | Add-Content $iniPath
-          "local_ip = 127.0.0.1" | Add-Content $iniPath
-          "local_port = 3389" | Add-Content $iniPath
-          "remote_port = 33077" | Add-Content $iniPath
+          echo "[common]" > "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "server_addr = 47.109.152.106" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "server_port = 7000" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "tls_enable = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "user = qxCHUlNnkWPhLcQ9pXYuIDiH" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "token = ChmlFrpToken" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "[am4TrUiZ]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "type = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "remote_port = 33077" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
 
       - name: 查看frpc.ini内容
         run: |
