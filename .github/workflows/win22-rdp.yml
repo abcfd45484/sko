@@ -1,4 +1,4 @@
-name: Win2022 ChmlFrp RDP
+name: Win2022 Tailscale RDP
 on:
   workflow_dispatch
 jobs:
@@ -6,7 +6,7 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 350
     steps:
-      - name: 开启RDP远程桌面 + 设置账号密码 + 放行防火墙
+      - name: 开启RDP远程桌面
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Restart-Service TermService -Force
@@ -14,48 +14,27 @@ jobs:
           Set-LocalUser -Name runneradmin -Password $securePwd
           New-NetFirewallRule -DisplayName "AllowRDP" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
 
-      - name: 启动Windows音频服务
+      - name: 启动Windows音频服务（优先启用系统音频）
         run: |
           Set-Service Audiosrv -StartupType Automatic
           Start-Service Audiosrv -ErrorAction SilentlyContinue
 
-      - name: 下载frp原版客户端（Github，海外可访问）
+      - name: 下载并安装 Tailscale（有效直链）
         run: |
-          $dlPath = "C:\Users\runneradmin\Downloads\frp.zip"
-          Invoke-WebRequest -Uri "https://github.com/fatedier/frp/releases/download/v0.51.2/frp_0.51.2_windows_386.zip" -OutFile $dlPath
+          $installer = "$env:TEMP\tailscale-setup.exe"
+          $dlUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
+          Invoke-WebRequest -Uri $dlUrl -OutFile $installer -UseBasicParsing
+          Start-Process -FilePath $installer -ArgumentList "/quiet" -Wait
 
-      - name: 解压frp
+      - name: 启动Tailscale组网
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
         run: |
-          $zipFile = "C:\Users\runneradmin\Downloads\frp.zip"
-          $extractDir = "C:\Users\runneradmin\Downloads\"
-          Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
+          & 'C:\Program Files\Tailscale\tailscale.exe' up --authkey $env:TS_AUTHKEY
+          Start-Sleep 15
 
-      - name: 生成frpc.ini
+      - name: 持续常驻，防止实例销毁
         run: |
-          echo "[common]" > "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "server_addr = 8.148.8.185" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "server_port = 7000" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "tls_enable = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "user = qxCHUlNnkWPhLcQ9pXYuIDiH" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "token = ChmlFrpToken" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "[aGQ61rRl]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "type = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "remote_port = 24035" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-
-      - name: 查看frpc.ini内容
-        run: |
-          cat "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-
-      - name: 修改RDP注册表关闭NLA
-        run: |
-          reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v SecurityLayer /t REG_DWORD /d 0 /f
-          reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v UserAuthentication /t REG_DWORD /d 0 /f
-
-      - name: 启动frpc常驻
-        run: |
-          cd C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386
-          .\frpc.exe
-          while($true){Start-Sleep 600}
+          while($true){
+            Start-Sleep 60
+          }
