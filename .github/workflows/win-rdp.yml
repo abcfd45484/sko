@@ -39,11 +39,11 @@ jobs:
           echo "user = qxCHUlNnkWPhLcQ9pXYuIDiH" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "token = ChmlFrpToken" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "[aGQ61rRl]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "[wHhh8ALm]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "type = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "remote_port = 24035" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "remote_port = 28200" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
 
       - name: 查看frpc.ini内容
         run: |
