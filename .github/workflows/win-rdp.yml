@@ -33,17 +33,17 @@ jobs:
       - name: 生成frpc.ini
         run: |
           echo "[common]" > "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "server_addr = 42.193.19.55" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "server_addr = 23.94.237.175" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "server_port = 7000" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "tls_enable = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "user = qxCHUlNnkWPhLcQ9pXYuIDiH" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "token = ChmlFrpToken" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "[x4eANuFP]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "[3lQPQbym]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "type = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "remote_port = 29494" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "remote_port = 26329" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
 
       - name: 查看frpc.ini内容
         run: |
