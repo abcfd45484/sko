@@ -53,6 +53,8 @@ jobs:
         run: |
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v SecurityLayer /t REG_DWORD /d 0 /f
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v UserAuthentication /t REG_DWORD /d 0 /f
+          Enable-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
+          Start-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
 
       - name: 启动frpc常驻
         run: |
