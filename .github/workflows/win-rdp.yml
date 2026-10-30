@@ -6,18 +6,16 @@ jobs:
     runs-on: windows-2025
     timeout-minutes: 350
     steps:
-      - name: 开启RDP远程桌面 + 设置账号密码 + 放行防火墙
+      - name: 开启RDP + 设置runneradmin密码
         run: |
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
           Restart-Service TermService -Force
           $securePwd = ConvertTo-SecureString "Win@202566" -AsPlainText -Force
           Set-LocalUser -Name runneradmin -Password $securePwd
-          New-NetFirewallRule -DisplayName "AllowRDP" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
 
-      - name: 启动Windows音频服务
+      - name: 放行3389防火墙
         run: |
-          Set-Service Audiosrv -StartupType Automatic
-          Start-Service Audiosrv -ErrorAction SilentlyContinue
+          New-NetFirewallRule -DisplayName "RDP-TCP-3389" -Direction Inbound -LocalPort 3389 -Protocol TCP -Action Allow
 
       - name: 下载frp原版客户端（Github，海外可访问）
         run: |
@@ -33,21 +31,22 @@ jobs:
       - name: 生成frpc.ini
         run: |
           echo "[common]" > "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "server_addr = 47.107.155.180" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "server_addr = sz.frp.one" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "server_port = 7000" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "tls_enable = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "tcp_mux = true" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "protocol = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "user = qxCHUlNnkWPhLcQ9pXYuIDiH" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "token = ChmlFrpToken" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "dns_server = 223.6.6.6" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "tls_enable = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "[OPk1LWwa]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "type = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "remote_port = 46275" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-
-      - name: 查看frpc.ini内容
-        run: |
-          cat "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "use_encryption = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "use_compression = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
 
       - name: 修改RDP注册表关闭NLA
         run: |
@@ -55,6 +54,7 @@ jobs:
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v UserAuthentication /t REG_DWORD /d 0 /f
           Enable-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
           Start-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
+
       - name: 启动frpc常驻
         run: |
           cd C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386
