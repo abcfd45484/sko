@@ -33,17 +33,22 @@ jobs:
       - name: 生成frpc.ini
         run: |
           echo "[common]" > "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "server_addr = 47.107.155.180" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "server_addr = sz.frp.one" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "server_port = 7000" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "tls_enable = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "tcp_mux = true" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "protocol = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "user = qxCHUlNnkWPhLcQ9pXYuIDiH" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "token = ChmlFrpToken" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "dns_server = 223.6.6.6" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "tls_enable = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "[RNqDGbRX]" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "type = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "remote_port = 55146" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "remote_port = 55146" >> "C:\Users\run55146neradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "use_encryption = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "use_compression = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
 
       - name: 查看frpc.ini内容
         run: |
