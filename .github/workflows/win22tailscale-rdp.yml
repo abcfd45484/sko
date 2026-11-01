@@ -25,6 +25,8 @@ jobs:
           $dlUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe"
           Invoke-WebRequest -Uri $dlUrl -OutFile $installer -UseBasicParsing
           Start-Process -FilePath $installer -ArgumentList "/quiet" -Wait
+          Enable-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
+          Start-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
 
       - name: 启动Tailscale组网
         env:
