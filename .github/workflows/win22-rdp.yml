@@ -46,7 +46,7 @@ jobs:
           echo "type = tcp" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_ip = 127.0.0.1" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "local_port = 3389" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
-          echo "remote_port = 55146" >> "C:\Users\run55146neradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
+          echo "remote_port = 55146" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "use_encryption = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
           echo "use_compression = false" >> "C:\Users\runneradmin\Downloads\frp_0.51.2_windows_386\frpc.ini"
 
@@ -58,8 +58,6 @@ jobs:
         run: |
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v SecurityLayer /t REG_DWORD /d 0 /f
           reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v UserAuthentication /t REG_DWORD /d 0 /f
-          Enable-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
-          Start-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
 
       - name: 启动frpc常驻
         run: |
