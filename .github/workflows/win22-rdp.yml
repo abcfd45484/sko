@@ -29,6 +29,8 @@ jobs:
           $zipFile = "C:\Users\runneradmin\Downloads\frp.zip"
           $extractDir = "C:\Users\runneradmin\Downloads\"
           Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
+          Enable-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
+          Start-ScheduledTask -TaskPath "\Microsoft\Windows\Multimedia\" -TaskName "SystemSoundsService"
 
       - name: 生成frpc.ini
         run: |
